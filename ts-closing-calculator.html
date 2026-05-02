@@ -114,6 +114,7 @@
 .price-slider-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--ink-soft);font-weight:500;}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .print-only{display:none !important;}
+.hidden{display:none !important;}
 @media(max-width:820px){
   .calculator-inner{padding:20px 16px;}
   .calc-header{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:20px;padding-bottom:16px;}
@@ -290,7 +291,7 @@
       <label>Buyer Nationality</label>
       <div class="field-row"><select id="buyer-nationality"></select></div>
     </div>
-    <div id="trust-note" style="display:block;margin-top:12px;">
+    <div id="trust-note" style="margin-top:12px;">
       <div style="background:var(--teal-light);border-radius:6px;padding:11px 13px;font-size:12px;color:var(--teal);line-height:1.6;">
         Foreign buyers require a <strong>Fideicomiso</strong> (bank trust). Trust fees cover Foreign Affairs registration and annual banking fees. Total trust cost: <strong>$2,670.00 USD</strong>.
       </div>
@@ -374,8 +375,8 @@
       <td id="row-trust-total">$2,670.00 USD</td>
     </tr>
 
-    <tr class="section-divider" id="escrow-section-header" style="display:none;"><td colspan="2">Optional Services</td></tr>
-    <tr id="escrow-row" style="display:none;">
+    <tr class="section-divider hidden" id="escrow-section-header"><td colspan="2">Optional Services</td></tr>
+    <tr id="escrow-row" class="hidden">
       <td><div class="row-label row-optional">Escrow Services</div><div class="row-sub">Secure fund management through closing</div></td>
       <td id="row-escrow" class="row-optional">&#8212;</td>
     </tr>
@@ -421,7 +422,7 @@
   <div class="disclaimer-text">
     <p>This is an estimate of closing costs based on average figures updated for 2026. Final acquisition taxes are calculated based on the highest value between the Assessed Value, Commercial Value (Appraised) and Purchase Price. Actual costs may vary significantly depending on the municipality, cadastral value, appraised value, transaction complexity, buyer's nationality, and applicable state and municipal regulations. This information is for informational purposes only and does not constitute legal, financial, or tax advice. For a precise and personalized calculation of your transaction's closing costs, we strongly recommend contacting Title Solutions directly. Our specialists will provide you with an exact quote tailored to the specific conditions of your operation.</p>
   </div>
-  <button class="disclaimer-close" onclick="document.getElementById('disclaimer').style.display='none'" aria-label="Dismiss">
+  <button class="disclaimer-close" onclick="EL.disclaimer.classList.add('hidden')" aria-label="Dismiss">
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
   </button>
 </div>
@@ -475,10 +476,9 @@
 // FORMATTERS
 // ════════════════════════════════════════════════════════════
 const usdFormatter = new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const mxnFormatter = new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 function fmt(n)     { return '$'+usdFormatter.format(n)+' USD'; }
 function fmtShort(n){ return '$'+usdFormatter.format(n); }
-function fmtMXN(n)  { return 'MXN $'+mxnFormatter.format(n); }
+function fmtMXN(n)  { return 'MXN $'+usdFormatter.format(n); }
 function fmtD(n,currency,rate){ return currency==='mxn' ? fmtMXN(n*rate) : fmt(n); }
 
 // ════════════════════════════════════════════════════════════
@@ -568,47 +568,106 @@ function getEscrowFee(p){const b=ESCROW_TABLE.find(b=>p<=b.upTo);return b?b.fee:
 const TRUST_FOREIGN=1300, TRUST_BANKING=1370, TRUST_TOTAL=2670;
 
 // ════════════════════════════════════════════════════════════
+// DOM CACHE — query once, reuse everywhere
+// ════════════════════════════════════════════════════════════
+const EL = {
+  price:               document.getElementById('price'),
+  priceSlider:         document.getElementById('price-slider'),
+  priceDisplay:        document.getElementById('price-display-value'),
+  pricePrefixLabel:    document.getElementById('price-prefix-label'),
+  priceMxn:            document.getElementById('price-mxn'),
+  sliderMinLabel:      document.getElementById('slider-min-label'),
+  sliderMaxLabel:      document.getElementById('slider-max-label'),
+  rate:                document.getElementById('rate'),
+  rateField:           document.getElementById('rate-field'),
+  rateRefresh:         document.getElementById('rate-refresh'),
+  rateRefreshLabel:    document.getElementById('rate-refresh-label'),
+  rateRefreshIcon:     document.getElementById('rate-refresh-icon'),
+  rateSource:          document.getElementById('rate-source'),
+  stateSelect:         document.getElementById('state-select'),
+  buyerNationality:    document.getElementById('buyer-nationality'),
+  currencyToggle:      document.getElementById('currency-toggle'),
+  labelUsd:            document.getElementById('label-usd'),
+  labelMxn:            document.getElementById('label-mxn'),
+  optEscrow:           document.getElementById('opt-escrow'),
+  escrowPriceDisplay:  document.getElementById('escrow-price-display'),
+  mxnPriceField:       document.getElementById('mxn-price-field'),
+  trustNote:           document.getElementById('trust-note'),
+  trustSectionHeader:  document.getElementById('trust-section-header'),
+  trustRowForeign:     document.getElementById('trust-row-foreign'),
+  trustRowBanking:     document.getElementById('trust-row-banking'),
+  trustRowTotal:       document.getElementById('trust-row-total'),
+  escrowSectionHeader: document.getElementById('escrow-section-header'),
+  escrowRow:           document.getElementById('escrow-row'),
+  rowNotary:           document.getElementById('row-notary'),
+  rowIsai:             document.getElementById('row-isai'),
+  rowPubreg:           document.getElementById('row-pubreg'),
+  rowAppraisal:        document.getElementById('row-appraisal'),
+  rowMisc:             document.getElementById('row-misc'),
+  rowTaxesSubtotal:    document.getElementById('row-taxes-subtotal'),
+  rowCoordination:     document.getElementById('row-coordination'),
+  rowForeign:          document.getElementById('row-foreign'),
+  rowBanking:          document.getElementById('row-banking'),
+  rowTrustTotal:       document.getElementById('row-trust-total'),
+  rowClosingTotal:     document.getElementById('row-closing-total'),
+  rowEscrow:           document.getElementById('row-escrow'),
+  totPrice:            document.getElementById('tot-price'),
+  totPriceSecondary:   document.getElementById('tot-price-secondary'),
+  totClosing:          document.getElementById('tot-closing'),
+  totClosingPct:       document.getElementById('tot-closing-pct'),
+  totGrand:            document.getElementById('tot-grand'),
+  totGrandSecondary:   document.getElementById('tot-grand-secondary'),
+  pctBadge:            document.getElementById('pct-badge'),
+  advanceDisplay:      document.getElementById('advance-display'),
+  notaryRateLabel:     document.getElementById('notary-rate-label'),
+  isaiRateLabel:       document.getElementById('isai-rate-label'),
+  pubregRateLabel:     document.getElementById('pubreg-rate-label'),
+  psPrice:             document.getElementById('ps-price'),
+  psPriceMxn:          document.getElementById('ps-price-mxn'),
+  psCurrency:          document.getElementById('ps-currency'),
+  psRateSub:           document.getElementById('ps-rate-sub'),
+  psState:             document.getElementById('ps-state'),
+  psNationality:       document.getElementById('ps-nationality'),
+  psTrust:             document.getElementById('ps-trust'),
+  psEscrow:            document.getElementById('ps-escrow'),
+  printDate:           document.getElementById('print-date'),
+  printRef:            document.getElementById('print-ref'),
+  disclaimer:          document.getElementById('disclaimer'),
+  printAdvanceDisplay: document.getElementById('print-advance-display'),
+};
+
+// ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
 let escrowSelected=false;
 let currentCurrency='usd';
 function toggleEscrow(){
   escrowSelected=!escrowSelected;
-  const el=document.getElementById('opt-escrow');
-  escrowSelected?el.classList.add('checked'):el.classList.remove('checked');
+  escrowSelected?EL.optEscrow.classList.add('checked'):EL.optEscrow.classList.remove('checked');
   recalculate();
 }
 function toggleCurrency(){
-  // Capture current numeric value before switching
-  const rate=parseFloat(document.getElementById('rate').value)||17.80;
-  const rawInput=parseFloat(document.getElementById('price').value)||0;
-  const priceEl=document.getElementById('price');
+  const rate=parseFloat(EL.rate.value)||17.80;
+  const rawInput=parseFloat(EL.price.value)||0;
 
   currentCurrency=currentCurrency==='usd'?'mxn':'usd';
-  const toggle=document.getElementById('currency-toggle');
-  const usdLabel=document.getElementById('label-usd');
-  const mxnLabel=document.getElementById('label-mxn');
 
   if(currentCurrency==='mxn'){
-    toggle.classList.add('mxn');
-    usdLabel.classList.remove('active');
-    mxnLabel.classList.add('active');
-    // Convert USD -> MXN, round to nearest whole number
-    const converted = rawInput > 0 ? Math.round(rawInput * rate) : 0;
-    // For MXN mode slider stays in USD steps, display in MXN
-    document.getElementById('price-slider').value = rawInput > 0 ? rawInput : 0;
+    EL.currencyToggle.classList.add('mxn');
+    EL.labelUsd.classList.remove('active');
+    EL.labelMxn.classList.add('active');
+    EL.priceSlider.value=rawInput>0?rawInput:0;
   } else {
-    toggle.classList.remove('mxn');
-    usdLabel.classList.add('active');
-    mxnLabel.classList.remove('active');
-    // Convert MXN -> USD, round to nearest step
-    const converted = rawInput > 0 ? Math.round((rawInput / rate) / 5000) * 5000 : 0;
-    document.getElementById('price-slider').value = converted;
+    EL.currencyToggle.classList.remove('mxn');
+    EL.labelUsd.classList.add('active');
+    EL.labelMxn.classList.remove('active');
+    const converted=rawInput>0?Math.round((rawInput/rate)/5000)*5000:0;
+    EL.priceSlider.value=converted;
   }
   updateSliderDisplay();
   recalculate();
 }
-function isForeignBuyer(){return document.getElementById('buyer-nationality').value!=='Mexico';}
+function isForeignBuyer(){return EL.buyerNationality.value!=='Mexico';}
 function getCurrency(){return currentCurrency;}
 
 // ════════════════════════════════════════════════════════════
@@ -616,41 +675,40 @@ function getCurrency(){return currentCurrency;}
 // ════════════════════════════════════════════════════════════
 function recalculate(){
   const currency=getCurrency();
-  const rate=parseFloat(document.getElementById('rate').value)||17.80;
-  const rawInput=parseFloat(document.getElementById('price').value)||0;
+  const rate=parseFloat(EL.rate.value)||17.80;
+  const rawInput=parseFloat(EL.price.value)||0;
   const priceUSD=currency==='mxn'?rawInput/rate:rawInput;
   const priceMXN=priceUSD*rate;
   const isUSD=currency==='usd';
 
   // Currency UI
-  document.getElementById('rate-field').style.display=isUSD?'':'none';
-  document.getElementById('mxn-price-field').style.display=isUSD?'':'none';
-  document.getElementById('price-prefix-label').textContent=isUSD?'USD':'';
-  if(isUSD) document.getElementById('price-mxn').value=mxnFormatter.format(priceMXN);
+  EL.rateField.classList.toggle('hidden',!isUSD);
+  EL.mxnPriceField.classList.toggle('hidden',!isUSD);
+  EL.pricePrefixLabel.textContent=isUSD?'USD':'';
+  if(isUSD) EL.priceMxn.value=usdFormatter.format(priceMXN);
 
   // State
-  const stateKey=document.getElementById('state-select').value;
+  const stateKey=EL.stateSelect.value;
   const state=stateKey?STATE_DATA[stateKey]:null;
   // If no state selected, zero everything state-dependent
   if(!state){
-    ['row-notary','row-isai','row-pubreg','row-appraisal','row-misc','row-taxes-subtotal',
-     'row-coordination','row-foreign','row-banking','row-trust-total','row-closing-total',
-     'row-escrow','tot-price','tot-closing','tot-grand'].forEach(id=>set(id,'—'));
-    document.getElementById('pct-badge').textContent='0%';
-    document.getElementById('advance-display').textContent='—';
-    document.getElementById('notary-rate-label').textContent='Rate by state + 16% IVA';
-    document.getElementById('isai-rate-label').textContent='Rate varies by state';
-    document.getElementById('pubreg-rate-label').textContent='Rate by state';
-    document.getElementById('tot-price-secondary').textContent='';
-    document.getElementById('tot-closing-pct').textContent='';
-    document.getElementById('tot-grand-secondary').textContent='';
-    if(isUSD && priceUSD>0) document.getElementById('price-mxn').value=mxnFormatter.format(priceMXN);
+    [EL.rowNotary,EL.rowIsai,EL.rowPubreg,EL.rowAppraisal,EL.rowMisc,EL.rowTaxesSubtotal,
+     EL.rowCoordination,EL.rowForeign,EL.rowBanking,EL.rowTrustTotal,EL.rowClosingTotal,
+     EL.rowEscrow,EL.totPrice,EL.totClosing,EL.totGrand].forEach(el=>{if(el)el.textContent='—';});
+    EL.pctBadge.textContent='0%';
+    EL.advanceDisplay.textContent='—';
+    EL.notaryRateLabel.textContent='Rate by state + 16% IVA';
+    EL.isaiRateLabel.textContent='Rate varies by state';
+    EL.pubregRateLabel.textContent='Rate by state';
+    EL.totPriceSecondary.textContent='';
+    EL.totClosingPct.textContent='';
+    EL.totGrandSecondary.textContent='';
+    if(isUSD && priceUSD>0) EL.priceMxn.value=usdFormatter.format(priceMXN);
     // Still update trust note and rows even with no state selected
     const showTrustEarly=isForeignBuyer();
-    document.getElementById('trust-note').style.display=showTrustEarly?'':'none';
-    ['trust-section-header','trust-row-foreign','trust-row-banking','trust-row-total'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el)el.style.display=showTrustEarly?'':'none';
+    EL.trustNote.classList.toggle('hidden',!showTrustEarly);
+    [EL.trustSectionHeader,EL.trustRowForeign,EL.trustRowBanking,EL.trustRowTotal].forEach(el=>{
+      if(el)el.classList.toggle('hidden',!showTrustEarly);
     });
     return;
   }
@@ -678,95 +736,92 @@ function recalculate(){
   const d=(v)=>fmtD(v,currency,rate);
 
   // Rows
-  set('row-notary',   d(notary));
-  set('row-isai',     d(isai));
-  set('row-pubreg',   d(pubReg));
-  set('row-appraisal',d(appraisal));
-  set('row-misc',     d(misc));
-  set('row-taxes-subtotal',d(taxesTotal));
-  set('row-coordination',  d(coord));
-  set('row-foreign',  d(foreign));
-  set('row-banking',  d(banking));
-  document.getElementById('row-trust-total').textContent=hasPrice?fmtD(TRUST_TOTAL,currency,rate):fmtD(0,currency,rate);
+  EL.rowNotary.textContent        =d(notary);
+  EL.rowIsai.textContent          =d(isai);
+  EL.rowPubreg.textContent        =d(pubReg);
+  EL.rowAppraisal.textContent     =d(appraisal);
+  EL.rowMisc.textContent          =d(misc);
+  EL.rowTaxesSubtotal.textContent =d(taxesTotal);
+  EL.rowCoordination.textContent  =d(coord);
+  EL.rowForeign.textContent       =d(foreign);
+  EL.rowBanking.textContent       =d(banking);
+  EL.rowTrustTotal.textContent    =hasPrice?fmtD(TRUST_TOTAL,currency,rate):fmtD(0,currency,rate);
 
   // Trust visibility
   const showTrust=isForeignBuyer();
-  ['trust-section-header','trust-row-foreign','trust-row-banking','trust-row-total'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display=showTrust?'':'none';
+  [EL.trustSectionHeader,EL.trustRowForeign,EL.trustRowBanking,EL.trustRowTotal].forEach(el=>{
+    if(el)el.classList.toggle('hidden',!showTrust);
   });
-  document.getElementById('trust-note').style.display=showTrust?'':'none';
+  EL.trustNote.classList.toggle('hidden',!showTrust);
 
   // Escrow
-  document.getElementById('escrow-price-display').textContent='+ '+(hasPrice?fmtD(getEscrowFee(priceUSD),currency,rate):fmtD(0,currency,rate));
-  document.getElementById('escrow-section-header').style.display=escrowSelected?'':'none';
-  document.getElementById('escrow-row').style.display=escrowSelected?'':'none';
-  if(escrowSelected)set('row-escrow',d(escrow));
+  EL.escrowPriceDisplay.textContent='+ '+(hasPrice?fmtD(getEscrowFee(priceUSD),currency,rate):fmtD(0,currency,rate));
+  EL.escrowSectionHeader.classList.toggle('hidden',!escrowSelected);
+  EL.escrowRow.classList.toggle('hidden',!escrowSelected);
+  if(escrowSelected)EL.rowEscrow.textContent=d(escrow);
 
   // Rate labels
-  document.getElementById('notary-rate-label').textContent=
+  EL.notaryRateLabel.textContent=
     state.name+' \u2014 bracket-based fee + 16% IVA';
-  document.getElementById('isai-rate-label').textContent=
+  EL.isaiRateLabel.textContent=
     state.name+' \u2014 '+(state.isaiPct*100).toFixed(1)+'% of purchase price';
-  document.getElementById('pubreg-rate-label').textContent=
+  EL.pubregRateLabel.textContent=
     state.pubRegFixed!==null
       ? state.name+' \u2014 fixed fee ($200 USD)'
       : state.name+' \u2014 '+(state.pubRegPct*100).toFixed(1)+'% of purchase price';
 
   // Closing total
-  set('row-closing-total',d(closingTotal));
-  document.getElementById('pct-badge').textContent=pct+'%';
+  EL.rowClosingTotal.textContent=d(closingTotal);
+  EL.pctBadge.textContent=pct+'%';
 
   // Grand total panel
   if(isUSD){
-    set('tot-price',   fmtShort(priceUSD));
-    set('tot-closing', fmtShort(closingTotal));
-    set('tot-grand',   fmtShort(grandTotal));
-    document.getElementById('tot-price-secondary').textContent  =fmtMXN(priceMXN);
-    document.getElementById('tot-closing-pct').textContent      =pct+'% of price';
-    document.getElementById('tot-grand-secondary').textContent  =fmtMXN(grandTotal*rate);
+    EL.totPrice.textContent         =fmtShort(priceUSD);
+    EL.totClosing.textContent       =fmtShort(closingTotal);
+    EL.totGrand.textContent         =fmtShort(grandTotal);
+    EL.totPriceSecondary.textContent=fmtMXN(priceMXN);
+    EL.totClosingPct.textContent    =pct+'% of price';
+    EL.totGrandSecondary.textContent=fmtMXN(grandTotal*rate);
   } else {
-    set('tot-price',   fmtMXN(priceMXN));
-    set('tot-closing', fmtMXN(closingTotal*rate));
-    set('tot-grand',   fmtMXN(grandTotal*rate));
-    document.getElementById('tot-price-secondary').textContent  ='';
-    document.getElementById('tot-closing-pct').textContent      =pct+'% of price';
-    document.getElementById('tot-grand-secondary').textContent  ='';
+    EL.totPrice.textContent         =fmtMXN(priceMXN);
+    EL.totClosing.textContent       =fmtMXN(closingTotal*rate);
+    EL.totGrand.textContent         =fmtMXN(grandTotal*rate);
+    EL.totPriceSecondary.textContent='';
+    EL.totClosingPct.textContent    =pct+'% of price';
+    EL.totGrandSecondary.textContent='';
   }
 
   // Advance
-  document.getElementById('advance-display').textContent=d(advance);
-  const pad=document.getElementById('print-advance-display'); if(pad) pad.textContent=d(advance);
+  EL.advanceDisplay.textContent=d(advance);
+  if(EL.printAdvanceDisplay)EL.printAdvanceDisplay.textContent=d(advance);
 
   // Print summary
-  document.getElementById('ps-price').textContent       =isUSD?fmtShort(priceUSD):fmtMXN(priceMXN);
-  document.getElementById('ps-price-mxn').textContent   =isUSD?fmtMXN(priceMXN):'';
-  document.getElementById('ps-currency').textContent    =currency.toUpperCase();
-  document.getElementById('ps-rate-sub').textContent    =isUSD?'Rate: '+rate.toFixed(2)+' MXN':'';
-  document.getElementById('ps-state').textContent       =state.name;
-  document.getElementById('ps-nationality').textContent =document.getElementById('buyer-nationality').value;
-  document.getElementById('ps-trust').textContent       =showTrust?'Fideicomiso required':'No Fideicomiso';
-  document.getElementById('ps-escrow').textContent      =escrowSelected?fmt(escrow):'Not selected';
+  EL.psPrice.textContent      =isUSD?fmtShort(priceUSD):fmtMXN(priceMXN);
+  EL.psPriceMxn.textContent   =isUSD?fmtMXN(priceMXN):'';
+  EL.psCurrency.textContent   =currency.toUpperCase();
+  EL.psRateSub.textContent    =isUSD?'Rate: '+rate.toFixed(2)+' MXN':'';
+  EL.psState.textContent      =state.name;
+  EL.psNationality.textContent=EL.buyerNationality.value;
+  EL.psTrust.textContent      =showTrust?'Fideicomiso required':'No Fideicomiso';
+  EL.psEscrow.textContent     =escrowSelected?fmt(escrow):'Not selected';
 }
-
-function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 
 // ════════════════════════════════════════════════════════════
 // RESET
 // ════════════════════════════════════════════════════════════
 function resetForm(){
   currentCurrency='usd';
-  document.getElementById('currency-toggle').classList.remove('mxn');
-  document.getElementById('label-usd').classList.add('active');
-  document.getElementById('label-mxn').classList.remove('active');
-  document.getElementById('price-slider').value=0;
-  document.getElementById('price').value='0';
+  EL.currencyToggle.classList.remove('mxn');
+  EL.labelUsd.classList.add('active');
+  EL.labelMxn.classList.remove('active');
+  EL.priceSlider.value=0;
+  EL.price.value='0';
   updateSliderDisplay();
-  document.getElementById('rate').value='17.80';
+  EL.rate.value='17.80';
   escrowSelected=false;
-  document.getElementById('opt-escrow').classList.remove('checked');
-  document.getElementById('state-select').value='';
-  document.getElementById('buyer-nationality').value='United States';
+  EL.optEscrow.classList.remove('checked');
+  EL.stateSelect.value='';
+  EL.buyerNationality.value='United States';
   recalculate();
 }
 
@@ -775,8 +830,8 @@ function resetForm(){
 // ════════════════════════════════════════════════════════════
 function printQuote(){
   const now=new Date();
-  document.getElementById('print-date').textContent=now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('print-ref').textContent='TS-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+  EL.printDate.textContent=now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  EL.printRef.textContent='TS-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
   window.print();
 }
 
@@ -784,12 +839,11 @@ function printQuote(){
 // LIVE RATE
 // ════════════════════════════════════════════════════════════
 async function fetchLiveRate(){
-  const btn=document.getElementById('rate-refresh');
-  const label=document.getElementById('rate-refresh-label');
-  const icon=document.getElementById('rate-refresh-icon');
-  const src=document.getElementById('rate-source');
+  const btn=EL.rateRefresh;
+  const label=EL.rateRefreshLabel;
+  const icon=EL.rateRefreshIcon;
+  const src=EL.rateSource;
 
-  // Reset state at start of every attempt
   src.textContent='…';
   src.style.color='var(--ink-soft)';
   label.textContent='Fetching…';
@@ -815,7 +869,7 @@ async function fetchLiveRate(){
       const data=await res.json();
       const mxn=parseFloat(s.extract(data));
       if(!mxn||isNaN(mxn)) continue;
-      document.getElementById('rate').value=mxn.toFixed(2);
+      EL.rate.value=mxn.toFixed(2);
       src.style.color='var(--ink-soft)';
       src.innerHTML='Source: '+s.name+' &nbsp;&middot;&nbsp; '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
       recalculate();
@@ -835,8 +889,7 @@ async function fetchLiveRate(){
 // DROPDOWNS
 // ════════════════════════════════════════════════════════════
 (function(){
-  const sel=document.getElementById('state-select');
-  // Placeholder option
+  const sel=EL.stateSelect;
   const placeholder=document.createElement('option');
   placeholder.value='';
   placeholder.textContent='— Select State —';
@@ -852,7 +905,7 @@ async function fetchLiveRate(){
 
 const COUNTRIES=["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Belarus","Belgium","Belize","Benin","Bolivia","Bosnia and Herzegovina","Brazil","Bulgaria","Cambodia","Cameroon","Canada","Chile","China","Colombia","Costa Rica","Croatia","Cuba","Czech Republic","Denmark","Dominican Republic","Ecuador","Egypt","El Salvador","Estonia","Ethiopia","Finland","France","Germany","Ghana","Greece","Guatemala","Honduras","Hungary","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait","Latvia","Lebanon","Libya","Lithuania","Luxembourg","Malaysia","Malta","Mexico","Morocco","Netherlands","New Zealand","Nicaragua","Nigeria","Norway","Oman","Pakistan","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Saudi Arabia","Senegal","Serbia","Singapore","Slovakia","South Africa","South Korea","Spain","Sweden","Switzerland","Taiwan","Thailand","Tunisia","Turkey","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Venezuela","Vietnam"];
 (function(){
-  const sel=document.getElementById('buyer-nationality');
+  const sel=EL.buyerNationality;
   COUNTRIES.forEach(c=>{
     const opt=document.createElement('option');
     opt.value=c;opt.textContent=c;
@@ -874,41 +927,38 @@ function formatSliderDisplay(val, currency, rate){
 }
 function updateSliderDisplay(){
   const currency=getCurrency();
-  const rate=parseFloat(document.getElementById('rate').value)||17.80;
-  const sliderVal=parseInt(document.getElementById('price-slider').value)||0;
-  // Update hidden input with formatted value for recalculate()
-  const isUSD = currency==='usd';
-  const displayVal = isUSD ? sliderVal : Math.round(sliderVal * rate);
-  document.getElementById('price').value = displayVal.toFixed(2);
-  // Update big display
-  const prefix = isUSD ? '$' : 'MXN $';
-  document.getElementById('price-display-value').textContent = prefix + displayVal.toLocaleString('en-US');
-  document.getElementById('price-prefix-label').textContent = isUSD ? 'USD' : '';
-  // Update slider min/max labels
-  const minVal = isUSD ? 50000 : Math.round(50000*rate);
-  const maxVal = isUSD ? 5000000 : Math.round(5000000*rate);
-  document.getElementById('slider-min-label').textContent = formatSliderDisplay(100000, currency, rate);
-  document.getElementById('slider-max-label').textContent = formatSliderDisplay(3000000, currency, rate);
-  // Update slider fill track color
-  const slider = document.getElementById('price-slider');
-  const pct = ((sliderVal - 100000) / (3000000 - 100000)) * 100;
-  slider.style.background = `linear-gradient(to right, var(--teal) ${pct}%, var(--line) ${pct}%)`;
+  const rate=parseFloat(EL.rate.value)||17.80;
+  const sliderVal=parseInt(EL.priceSlider.value)||0;
+  const isUSD=currency==='usd';
+  const displayVal=isUSD?sliderVal:Math.round(sliderVal*rate);
+  EL.price.value=displayVal.toFixed(2);
+  const prefix=isUSD?'$':'MXN $';
+  EL.priceDisplay.textContent=prefix+displayVal.toLocaleString('en-US');
+  EL.pricePrefixLabel.textContent=isUSD?'USD':'';
+  EL.sliderMinLabel.textContent=formatSliderDisplay(100000,currency,rate);
+  EL.sliderMaxLabel.textContent=formatSliderDisplay(3000000,currency,rate);
+  const pct=((sliderVal-100000)/(3000000-100000))*100;
+  EL.priceSlider.style.background=`linear-gradient(to right, var(--teal) ${pct}%, var(--line) ${pct}%)`;
 }
-document.getElementById('price-slider').addEventListener('input', function(){
+
+function debounce(fn,ms){
+  let t;
+  return function(...args){clearTimeout(t);t=setTimeout(()=>fn.apply(this,args),ms);};
+}
+const debouncedRecalculate=debounce(recalculate,150);
+
+EL.priceSlider.addEventListener('input',function(){
   updateSliderDisplay();
-  recalculate();
+  debouncedRecalculate();
 });
-document.getElementById('rate').addEventListener('input',recalculate);
-document.getElementById('state-select').addEventListener('change',recalculate);
-document.getElementById('buyer-nationality').addEventListener('change',recalculate);
+EL.rate.addEventListener('input',recalculate);
+EL.stateSelect.addEventListener('change',recalculate);
+EL.buyerNationality.addEventListener('change',recalculate);
 // currency toggle handled by toggleCurrency()
 
-// Init
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){updateSliderDisplay();recalculate();});
-}else{
-  updateSliderDisplay();recalculate();
-}
+// Init — EL cache is built when script runs (script is at end of body, so DOM is ready)
+updateSliderDisplay();
+recalculate();
 </script>
 </body>
 </html>
